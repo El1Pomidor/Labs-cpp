@@ -1,7 +1,8 @@
 ﻿#include <iostream>
 #include <fstream>
 #include <cmath>
-#include <limits>
+#include <string>
+
 
 bool validateCoefficients(std::ifstream& inputFile, double& a, double& b, double& c) {
     if (!(inputFile >> a >> b >> c)) {
@@ -23,39 +24,54 @@ void readCoefficients(const std::string& filename, double& a, double& b, double&
     inputFile.close();
 }
 
-void SolveEquation(double a, double b, double c) {
+
+std::string solveEquation(double a, double b, double c) {
+    std::string result;
     if (a == 0) {
         if (b == 0) {
-            std::cout << "The equation has no solutions" << std::endl;
+            result = "The equation has no solutions.";
         }
         else if (c == 0) {
-            std::cout << "It's a linear equation, one root: " << 0 << std::endl;
+            result = "It's a linear equation, one root: " + std::to_string(0);
         }
         else {
-            std::cout << "It's a linear equation, one root: " << - c / b << std::endl;
+            result = "It's a linear equation, one root: " + std::to_string(-c / b);
         }
-        return;
-    }
-
-    double D = b * b - 4 * a * c;
-    if (D > 0) {
-        double x1 = (-b + std::sqrt(D)) / (2 * a);
-        double x2 = (-b - std::sqrt(D)) / (2 * a);
-        std::cout << "The roots of the equation: " << x1 << " and " << x2 << std::endl;
-    }
-    else if (D == 0) {
-        double x = -b / (2 * a);
-        std::cout << "One root: " << x << std::endl;
     }
     else {
-        std::cout << "There are no real roots." << std::endl;
+        double D = b * b - 4 * a * c;
+        if (D > 0) {
+            double x1 = (-b + std::sqrt(D)) / (2.0 * a);
+            double x2 = (-b - std::sqrt(D)) / (2.0 * a);
+            result = "The roots of the equation: " + std::to_string(x1) + " and " + std::to_string(x2);
+        }
+        else if (D == 0) {
+            double x = -b / (2.0 * a);
+            result = "One root: " + std::to_string(x);
+        }
+        else {
+            result = "There are no real roots.";
+        }
     }
+    return result;
+}
+void writeRootsToFile(const std::string& filename, const std::string& result) {
+    std::ofstream outputFile(filename, std::ios::out);
+    if (!outputFile) {
+        std::cerr << "File creation error!" << std::endl;
+        exit(1);
+    }
+    outputFile << result;
+    outputFile.close();
 }
 
 int main() {
     double a, b, c;
-    std::string filename = "input.txt";
+    std::string filename = "koeffs.txt";
+
     readCoefficients(filename, a, b, c);
-    SolveEquation(a, b, c);
+    std::string result = solveEquation(a, b, c);
+    std::cout << result << std::endl;
+    writeRootsToFile("roots.txt", result);
     return 0;
 }
