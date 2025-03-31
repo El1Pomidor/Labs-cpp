@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include <fstream>
+#include <sstream>
 #include <cmath>
 #include <limits>
 
@@ -28,17 +29,23 @@ void solveEquations(QuadraticEquation* head) {
 QuadraticEquation* readEquationsFromFile(const std::string& filename) {
     std::ifstream inputFile(filename);
     if (!inputFile) {
-        std::cerr << "File opening error!" << std::endl;
+        std::cerr << "Ошибка открытия файла!" << std::endl;
         return nullptr;
     }
 
     QuadraticEquation* head = nullptr;
     QuadraticEquation* tail = nullptr;
-    double a, b, c;
+    std::string line;
 
-    while (inputFile >> a >> b >> c) {
+    while (std::getline(inputFile, line)) {
+        std::istringstream iss(line);
+        double a, b, c;
+        if (!(iss >> a >> b >> c)) {
+            std::cerr << "Некорректная строка: " << line << std::endl;
+            continue;
+        }
         if (a == 0) {
-            std::cerr << "Incorrect equation: the coefficient a cannot be 0" << std::endl;
+            std::cerr << "Некорректное уравнение: a не может быть 0." << std::endl;
             continue;
         }
         QuadraticEquation* newEq = new QuadraticEquation{ a, b, c };
@@ -58,12 +65,12 @@ QuadraticEquation* readEquationsFromFile(const std::string& filename) {
 void printEquations(QuadraticEquation* head) {
     QuadraticEquation* current = head;
     while (current) {
-        std::cout << "The equation: " << current->a << "x^2 + " << current->b << "x + " << current->c << " = 0\n";
+        std::cout << "Уравнение: " << current->a << "x^2 + " << current->b << "x + " << current->c << " = 0\n";
         if (!std::isnan(current->root1) && !std::isnan(current->root2)) {
-            std::cout << "ROots: " << current->root1 << " and " << current->root2 << "\n";
+            std::cout << "Корни: " << current->root1 << " и " << current->root2 << "\n";
         }
         else {
-            std::cout << "There are no real roots.\n";
+            std::cout << "Нет вещественных корней.\n";
         }
         std::cout << "------------------\n";
         current = current->next;
