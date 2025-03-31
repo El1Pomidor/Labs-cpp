@@ -5,6 +5,7 @@
 #include <limits>
 #include <string>
 #include <random>
+#include <iomanip>
 
 struct QuadraticEquation {
     double a, b, c;
@@ -18,6 +19,7 @@ enum class StudentType { EXCELLENT, GOOD, POOR };
 struct Student {
     std::string name;
     StudentType type;
+    int cnt = 0;
     Student* next = nullptr;
 };
 
@@ -37,7 +39,7 @@ Student* readStudentsFromFile(const std::string& filename) {
 
     while (std::getline(inputFile, line)) {
         StudentType type = static_cast<StudentType>(dist(gen));
-        Student* newStudent = new Student{ line, type, nullptr };
+        Student* newStudent = new Student{ line, type, 0, nullptr };
         if (!head) {
             head = tail = newStudent;
         }
@@ -51,16 +53,46 @@ Student* readStudentsFromFile(const std::string& filename) {
     return head;
 }
 
-void printStudents(Student* head) {
+void Teacher(Student* students, QuadraticEquation* equations) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<double> dist(0.8, 1.0);
+
+    Student* currentStudent = students;
+    while (currentStudent) {
+        int correctCount = 0;
+        QuadraticEquation* currentEq = equations;
+        while (currentEq) {
+            if (currentStudent->type == StudentType::EXCELLENT) {
+                correctCount++;
+            }
+            else if (currentStudent->type == StudentType::GOOD) {
+                double factor = dist(gen);
+                double root1 = currentEq->root1 * factor;
+                double root2 = currentEq->root2 * factor;
+                if ((std::abs(root1 - currentEq->root1) < 1e-1) && (std::abs(root2 - currentEq->root2) < 1e-1)) {
+                    correctCount++;
+                }
+            }
+            currentEq = currentEq->next;
+        }
+        currentStudent->cnt = correctCount;
+        currentStudent = currentStudent->next;
+    }
+}
+
+void printStudentsTable(Student* head) {
+    std::cout << std::left << std::setw(20) << "Name" << std::setw(15) << "Type" << "Solved Equations" << std::endl;
+    std::cout << std::string(50, '-') << std::endl;
     Student* current = head;
     while (current) {
-        std::cout << "Студент: " << current->name << " - Тип: ";
+        std::cout << std::left << std::setw(20) << current->name;
         switch (current->type) {
-        case StudentType::EXCELLENT: std::cout << "Отличник"; break;
-        case StudentType::GOOD: std::cout << "Хорошист"; break;
-        case StudentType::POOR: std::cout << "Двоечник"; break;
+        case StudentType::EXCELLENT: std::cout << std::setw(15) << "Excellent"; break;
+        case StudentType::GOOD: std::cout << std::setw(15) << "Good"; break;
+        case StudentType::POOR: std::cout << std::setw(15) << "Bad"; break;
         }
-        std::cout << "\n";
+        std::cout << current->cnt << std::endl;
         current = current->next;
     }
 }
@@ -91,7 +123,7 @@ void solveEquations(QuadraticEquation* head) {
 QuadraticEquation* readEquationsFromFile(const std::string& filename) {
     std::ifstream inputFile(filename);
     if (!inputFile) {
-        std::cerr << "Ошибка открытия файла!" << std::endl;
+        std::cerr << "File opening error!" << std::endl;
         return nullptr;
     }
 
@@ -103,11 +135,11 @@ QuadraticEquation* readEquationsFromFile(const std::string& filename) {
         std::istringstream iss(line);
         double a, b, c;
         if (!(iss >> a >> b >> c)) {
-            std::cerr << "Некорректная строка: " << line << std::endl;
+            std::cerr << "Invalid string: " << line << std::endl;
             continue;
         }
         if (a == 0) {
-            std::cerr << "Некорректное уравнение: a не может быть 0." << std::endl;
+            std::cerr << "Incorrect equation: a cannot be 0." << std::endl;
             continue;
         }
         QuadraticEquation* newEq = new QuadraticEquation{ a, b, c };
@@ -124,21 +156,6 @@ QuadraticEquation* readEquationsFromFile(const std::string& filename) {
     return head;
 }
 
-void printEquations(QuadraticEquation* head) {
-    QuadraticEquation* current = head;
-    while (current) {
-        std::cout << "Уравнение: " << current->a << "x^2 + " << current->b << "x + " << current->c << " = 0\n";
-        if (!std::isnan(current->root1) && !std::isnan(current->root2)) {
-            std::cout << "Корни: " << current->root1 << " и " << current->root2 << "\n";
-        }
-        else {
-            std::cout << "Нет вещественных корней.\n";
-        }
-        std::cout << "------------------\n";
-        current = current->next;
-    }
-}
-
 void deleteEquations(QuadraticEquation* head) {
     while (head) {
         QuadraticEquation* temp = head;
@@ -152,13 +169,14 @@ int main() {
     if (!equations) return 1;
 
     solveEquations(equations);
-    printEquations(equations);
-    deleteEquations(equations);
 
     Student* students = readStudentsFromFile("students.txt");
     if (!students) return 1;
 
-    printStudents(students);
+    Teacher(students, equations);
+    printStudentsTable(students);
+
+    deleteEquations(equations);
     deleteStudents(students);
 
     return 0;
