@@ -81,7 +81,7 @@ void Teacher(Student* students, QuadraticEquation* equations) {
     }
 }
 
-void printStudentsTable(Student* head) {
+void printStudentsTable(Student* head, int eq_number) {
     std::cout << std::left << std::setw(20) << "Name" << std::setw(15) << "Type" << "Solved Equations" << std::endl;
     std::cout << std::string(50, '-') << std::endl;
     Student* current = head;
@@ -92,7 +92,7 @@ void printStudentsTable(Student* head) {
         case StudentType::GOOD: std::cout << std::setw(15) << "Good"; break;
         case StudentType::POOR: std::cout << std::setw(15) << "Bad"; break;
         }
-        std::cout << current->cnt << std::endl;
+        std::cout << current->cnt <<"/" << eq_number<< std::endl;
         current = current->next;
     }
 }
@@ -105,7 +105,8 @@ void deleteStudents(Student* head) {
     }
 }
 
-void solveEquations(QuadraticEquation* head) {
+int solveEquations(QuadraticEquation* head) {
+    int cnt = 0;
     QuadraticEquation* current = head;
     while (current) {
         double discriminant = current->b * current->b - 4 * current->a * current->c;
@@ -117,7 +118,9 @@ void solveEquations(QuadraticEquation* head) {
             current->root1 = current->root2 = -current->b / (2 * current->a);
         }
         current = current->next;
+        cnt += 1;
     }
+    return cnt;
 }
 
 QuadraticEquation* readEquationsFromFile(const std::string& filename) {
@@ -168,13 +171,13 @@ int main() {
     QuadraticEquation* equations = readEquationsFromFile("equations.txt");
     if (!equations) return 1;
 
-    solveEquations(equations);
+    int cnt = solveEquations(equations);
 
     Student* students = readStudentsFromFile("students.txt");
     if (!students) return 1;
 
     Teacher(students, equations);
-    printStudentsTable(students);
+    printStudentsTable(students, cnt);
 
     deleteEquations(equations);
     deleteStudents(students);
