@@ -3,6 +3,8 @@
 #include <sstream>
 #include <cmath>
 #include <limits>
+#include <string>
+#include <random>
 
 struct QuadraticEquation {
     double a, b, c;
@@ -10,6 +12,66 @@ struct QuadraticEquation {
     double root2 = std::numeric_limits<double>::quiet_NaN();
     QuadraticEquation* next = nullptr;
 };
+
+enum class StudentType { EXCELLENT, GOOD, POOR };
+
+struct Student {
+    std::string name;
+    StudentType type;
+    Student* next = nullptr;
+};
+
+Student* readStudentsFromFile(const std::string& filename) {
+    std::ifstream inputFile(filename);
+    if (!inputFile) {
+        std::cerr << "Ошибка открытия файла!" << std::endl;
+        return nullptr;
+    }
+
+    Student* head = nullptr;
+    Student* tail = nullptr;
+    std::string line;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(0, 2);
+
+    while (std::getline(inputFile, line)) {
+        StudentType type = static_cast<StudentType>(dist(gen));
+        Student* newStudent = new Student{ line, type, nullptr };
+        if (!head) {
+            head = tail = newStudent;
+        }
+        else {
+            tail->next = newStudent;
+            tail = newStudent;
+        }
+    }
+
+    inputFile.close();
+    return head;
+}
+
+void printStudents(Student* head) {
+    Student* current = head;
+    while (current) {
+        std::cout << "Студент: " << current->name << " - Тип: ";
+        switch (current->type) {
+        case StudentType::EXCELLENT: std::cout << "Отличник"; break;
+        case StudentType::GOOD: std::cout << "Хорошист"; break;
+        case StudentType::POOR: std::cout << "Двоечник"; break;
+        }
+        std::cout << "\n";
+        current = current->next;
+    }
+}
+
+void deleteStudents(Student* head) {
+    while (head) {
+        Student* temp = head;
+        head = head->next;
+        delete temp;
+    }
+}
 
 void solveEquations(QuadraticEquation* head) {
     QuadraticEquation* current = head;
@@ -92,6 +154,12 @@ int main() {
     solveEquations(equations);
     printEquations(equations);
     deleteEquations(equations);
+
+    Student* students = readStudentsFromFile("students.txt");
+    if (!students) return 1;
+
+    printStudents(students);
+    deleteStudents(students);
 
     return 0;
 }
